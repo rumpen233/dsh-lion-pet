@@ -1,6 +1,6 @@
 # dsh-lion-pet 🦁
 
-把校徽里的那只元气小狮子放进 **DeepSeek Harness** 的桌宠插件。
+把刑小狮放进 **DeepSeek Harness** 的桌宠插件。
 
 ![dsh-lion-pet 预览](docs/cover.webp)
 
