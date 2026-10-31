@@ -2,7 +2,16 @@
   "name": "dsh-lion-pet",
   "version": "1.0.0",
   "description": "小狮子桌宠 —— 把校徽里的元气小狮子放进 DeepSeek Harness：待机呼吸、随机散步、点击回应、拖拽甩动、右键菜单与位置记忆。",
+  "author": "rumpen233",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rumpen233/dsh-lion-pet.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rumpen233/dsh-lion-pet/issues"
+  },
+  "homepage": "https://github.com/rumpen233/dsh-lion-pet#readme",
   "type": "module",
   "main": "lib/index.js",
   "icon": "assets/icon.png",
