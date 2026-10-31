@@ -1,0 +1,48 @@
+{
+  "name": "dsh-lion-pet",
+  "version": "1.0.0",
+  "description": "小狮子桌宠 —— 把校徽里的元气小狮子放进 DeepSeek Harness：待机呼吸、随机散步、点击回应、拖拽甩动、右键菜单与位置记忆。",
+  "license": "MIT",
+  "type": "module",
+  "main": "lib/index.js",
+  "icon": "assets/icon.png",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "assets/icon.png",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "desktop-pet",
+    "pet",
+    "lion",
+    "floating-widget"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.4"
+  }
+}

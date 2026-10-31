@@ -1,0 +1,23 @@
+dsh-lion-pet
+Copyright (c) 2026 rumpen233
+
+Code license
+------------
+The source code, build scripts and documentation are released under the MIT
+License. See LICENSE.
+
+Artwork notice
+--------------
+`assets/lion-front.webp`, `assets/lion-side.webp`, `assets/icon.png` and the
+preview images in `docs/` are derived from a user-supplied illustration of the
+mascot of the Criminal Justice School, Zhongnan University of Economics and
+Law (中南财经政法大学刑事司法学院).
+
+Copyright and trademark rights in the original artwork remain with their
+respective owners. The artwork is included here for non-commercial
+demonstration and personal use only. It is NOT licensed under the MIT License,
+and no permission to redistribute it commercially is granted by this
+repository.
+
+If you are a rights holder and would like the artwork removed or credited
+differently, please open an issue and it will be handled promptly.

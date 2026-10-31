@@ -1,0 +1,5 @@
+# dsh-lion-pet profile bundle patch
+# The host half is a no-op; the browser half registers the floating overlay.
+- insert:
+    - id: lion-pet
+      name: 'dsh-lion-pet'
