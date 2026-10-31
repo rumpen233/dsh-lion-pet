@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>刑小狮桌宠</title>
+	<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+	<div class="stage" id="stage">
+		<div class="halo"></div>
+		<div class="pet" id="pet" role="button" tabindex="0" aria-label="刑小狮桌宠：拖动搬家，单击摸摸头，右键菜单">
+			<img class="lion front" id="front" src="assets/lion-front.webp" alt="" draggable="false">
+			<img class="lion side" id="side" src="assets/lion-side.webp" alt="" draggable="false">
+			<div class="particles" id="particles"></div>
+		</div>
+		<div class="bubble" id="bubble" role="status" aria-live="polite"></div>
+		<div class="menu" id="menu" role="menu" aria-hidden="true">
+			<button type="button" data-action="pet"><i></i>摸摸头</button>
+			<button type="button" data-action="spin"><i class="yellow"></i>转个圈</button>
+			<button type="button" data-action="smaller"><i class="green"></i>缩小一点</button>
+			<button type="button" data-action="bigger"><i class="green"></i>放大一点</button>
+			<div class="sep"></div>
+			<button type="button" data-action="webonly"><i></i>只在网页显示</button>
+			<button type="button" data-action="off"><i class="red"></i>关闭显示</button>
+		</div>
+	</div>
+	<script src="renderer.js"></script>
+</body>
+</html>

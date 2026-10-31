@@ -1,10 +1,12 @@
 ;(() => {
 	window.__ModuleLoader__.load({
 		id: "dsh-lion-pet",
-		factory: () => {
+		factory: (require) => {
 			const FRONT = "data:image/webp;base64,__LION_FRONT__";
 			const SIDE = "data:image/webp;base64,__LION_SIDE__";
 			const STORAGE_KEY = "dsh-lion-pet:v4";
+			const DISPLAY_URL = "/dsh-lion-pet/config";
+			const DISPLAY_MODES = ["desktop", "web", "both", "off"];
 			const FRONT_RATIO = 726 / 522;
 			const MIN_SIZE = 140;
 			const MAX_SIZE = 380;
@@ -435,7 +437,7 @@
 				"我在你桌面上巡逻，一切正常。",
 				"累了就靠一会儿，我替你站岗。",
 				"别卷啦，陪我晒晒太阳。",
-				"正义也许会迟到，但小狮子不会。",
+				"正义也许会迟到，但刑小狮不会。",
 				"我把今天的烦恼都吃掉啦。"
 			];
 
@@ -481,6 +483,144 @@
 				return next;
 			}
 
+			function normalizeDisplay(value) {
+				return DISPLAY_MODES.indexOf(value) >= 0 ? value : "both";
+			}
+
+			async function readDisplay() {
+				try {
+					const response = await fetch(DISPLAY_URL, { cache: "no-store" });
+					if (!response.ok) return null;
+					const data = await response.json();
+					return normalizeDisplay(data && data.display);
+				} catch {
+					return null;
+				}
+			}
+
+			function registerSettings(ctx, require) {
+				if (!ctx || !ctx.slots || typeof ctx.slots.inject !== "function" || typeof require !== "function") return;
+				let React;
+				let jsx;
+				try {
+					React = require("react");
+					jsx = React.createElement;
+				} catch {
+					return;
+				}
+				const OPTIONS = [
+					{ id: "both", title: "桌面 + 网页", hint: "桌面悬浮窗和 DSH 页面内都显示" },
+					{ id: "desktop", title: "仅桌面", hint: "只在桌面悬浮显示，DSH 页面内隐藏" },
+					{ id: "web", title: "仅网页", hint: "只在 DSH 网页界面显示；其他网页请装浏览器扩展" },
+					{ id: "off", title: "关闭显示", hint: "都不显示，随时可以在这里重新打开" },
+				];
+				function LionSettings() {
+					const [display, setDisplay] = React.useState("both");
+					const [saving, setSaving] = React.useState("");
+					const [error, setError] = React.useState("");
+					React.useEffect(() => {
+						let alive = true;
+						readDisplay().then((value) => {
+							if (alive && value) setDisplay(value);
+						});
+						return () => { alive = false; };
+					}, []);
+					const save = React.useCallback(async (next) => {
+						if (next === display && !error) return;
+						setSaving(next);
+						setError("");
+						try {
+							const response = await fetch(DISPLAY_URL, {
+								method: "PUT",
+								headers: { "content-type": "application/json" },
+								body: JSON.stringify({ display: next }),
+							});
+							if (!response.ok) throw new Error("HTTP " + response.status);
+							const data = await response.json();
+							const saved = normalizeDisplay(data && data.display);
+							setDisplay(saved);
+							window.dispatchEvent(new CustomEvent("dsh-lion-pet:display", { detail: saved }));
+						} catch (e) {
+							setError("保存失败：" + (e && e.message ? e.message : "请稍后重试"));
+						} finally {
+							setSaving("");
+						}
+					}, [display, error]);
+					const cards = OPTIONS.map((option) => {
+						const active = display === option.id;
+						const busy = saving === option.id;
+						return jsx("button", {
+							type: "button",
+							role: "radio",
+							"aria-checked": active,
+							disabled: Boolean(saving),
+							onClick: () => save(option.id),
+							style: {
+								display: "flex",
+								flexDirection: "column",
+								alignItems: "flex-start",
+								gap: "5px",
+								padding: "12px 14px",
+								borderRadius: "12px",
+								border: active ? "2px solid #4f8fe8" : "1px solid rgba(120, 140, 170, .28)",
+								background: active ? "rgba(79, 143, 232, .09)" : "rgba(255, 255, 255, .55)",
+								textAlign: "left",
+								cursor: saving ? "wait" : "pointer",
+								font: "inherit",
+								color: "#1d355f",
+								opacity: busy ? 0.62 : 1,
+							},
+						}, jsx("span", {
+							style: { display: "flex", alignItems: "center", gap: "8px", fontSize: "14px", fontWeight: 700 },
+						}, jsx("span", {
+							"aria-hidden": "true",
+							style: {
+								width: "14px",
+								height: "14px",
+								borderRadius: "50%",
+								border: active ? "4px solid #4f8fe8" : "1.5px solid #9aabc4",
+								background: "#fff",
+								flex: "none",
+							},
+						}), option.title, busy ? jsx("span", { style: { color: "#4f8fe8", fontWeight: 500 } }, "保存中…") : null),
+						jsx("span", { style: { fontSize: "12px", lineHeight: 1.55, color: "#6d7f99" } }, option.hint));
+					});
+					return jsx("section", {
+						style: {
+							display: "flex",
+							flexDirection: "column",
+							gap: "14px",
+							padding: "4px 2px 14px",
+							maxWidth: "640px",
+						},
+					},
+					jsx("div", {
+						style: { display: "flex", flexDirection: "column", gap: "5px" },
+					},
+					jsx("h3", { style: { margin: 0, fontSize: "16px", color: "#172e55" } }, "显示位置"),
+					jsx("p", { style: { margin: 0, fontSize: "13px", lineHeight: 1.65, color: "#6d7f99" } }, "选择刑小狮出现在哪里。桌面模式会打开一个透明置顶的小窗口，可拖动、点击和右键互动。")),
+					jsx("div", {
+						role: "radiogroup",
+						"aria-label": "刑小狮显示位置",
+						style: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "10px" },
+					}, cards),
+					error ? jsx("p", { style: { margin: 0, fontSize: "12px", color: "#c74a3f" } }, error) : null);
+				}
+				try {
+					ctx.slots.inject("settings.section", function* () {
+						yield ctx.slots.register({
+							name: "settings.section",
+							id: "lion-pet-config",
+							order: 32,
+							label: () => "刑小狮桌宠",
+							inject: () => ({}),
+						}, LionSettings);
+					});
+				} catch {
+					/* settings section is optional; the pet must still mount */
+				}
+			}
+
 			function apply(ctx) {
 				let host = null;
 				let root = null;
@@ -516,6 +656,8 @@
 				let velocityX = 0;
 				let velocityY = 0;
 				let domReadyHandler = null;
+				let display = "both";
+				let displayTimer = 0;
 
 				const state = loadState();
 				locked = state.locked;
@@ -775,8 +917,20 @@
 					say(pick(["转圈圈～", "看我的狮子回旋！", "晕乎乎……但很好看。"]));
 				}
 
+				function webVisible() {
+					return display === "web" || display === "both";
+				}
+
 				function applyVisibility() {
-					if (!petEl || !wakeEl) return;
+					if (!host || !petEl || !wakeEl) return;
+					host.style.display = webVisible() ? "block" : "none";
+					if (!webVisible()) {
+						closeMenu();
+						cancelWalk();
+						cancelInertia();
+						if (bubbleEl) bubbleEl.classList.remove("is-on");
+						return;
+					}
 					petEl.hidden = state.hidden === true;
 					wakeEl.hidden = state.hidden !== true;
 					if (state.hidden) {
@@ -784,6 +938,17 @@
 						cancelWalk();
 						cancelInertia();
 						if (bubbleEl) bubbleEl.classList.remove("is-on");
+					}
+				}
+
+				async function refreshDisplay() {
+					const next = await readDisplay();
+					if (!next || next === display) return;
+					const wasVisible = webVisible();
+					display = next;
+					applyVisibility();
+					if (!wasVisible && webVisible() && !state.hidden) {
+						say("我从桌面溜回来啦～");
 					}
 				}
 
@@ -946,7 +1111,7 @@
 					root.innerHTML = `
 						<style>${CSS}</style>
 						<div class="lp-layer">
-							<div class="lp-pet" role="button" tabindex="0" aria-label="小狮子桌宠：拖动可以搬家，单击摸摸头，右键打开菜单">
+							<div class="lp-pet" role="button" tabindex="0" aria-label="刑小狮桌宠：拖动可以搬家，单击摸摸头，右键打开菜单">
 								<div class="lp-halo"></div>
 								<div class="lp-shadow"></div>
 								<div class="lp-body">
@@ -956,7 +1121,7 @@
 								</div>
 								<div class="lp-bubble" role="status" aria-live="polite"></div>
 							</div>
-							<div class="lp-menu" role="menu" aria-hidden="true" aria-label="小狮子菜单">
+							<div class="lp-menu" role="menu" aria-hidden="true" aria-label="刑小狮菜单">
 								<button type="button" role="menuitem" data-action="pet"><span class="lp-dot"></span>摸摸头</button>
 								<button type="button" role="menuitem" data-action="walk"><span class="lp-dot red"></span>散散步</button>
 								<button type="button" role="menuitem" data-action="spin"><span class="lp-dot yellow"></span>转个圈</button>
@@ -966,11 +1131,11 @@
 								<button type="button" role="menuitem" data-action="lock"><span class="lp-dot"></span><span class="lp-lock-label">锁定位置</span></button>
 								<div class="lp-sep"></div>
 								<button type="button" role="menuitem" data-action="reset"><span class="lp-dot"></span>回到右下角</button>
-								<button type="button" role="menuitem" data-action="hide"><span class="lp-dot red"></span>隐藏小狮子</button>
+								<button type="button" role="menuitem" data-action="hide"><span class="lp-dot red"></span>隐藏刑小狮</button>
 							</div>
-							<button type="button" class="lp-wake" hidden aria-label="唤醒小狮子">
+							<button type="button" class="lp-wake" hidden aria-label="唤醒刑小狮">
 								<span class="lp-wake-face"><img alt="" draggable="false" src="${FRONT}"></span>
-								<span>唤醒小狮子</span>
+								<span>唤醒刑小狮</span>
 							</button>
 						</div>
 					`;
@@ -1067,9 +1232,17 @@
 					on(window, "blur", () => {
 						if (drag) endDrag({ pointerId: drag.id });
 					});
+					on(window, "dsh-lion-pet:display", (event) => {
+						const next = normalizeDisplay(event && event.detail);
+						if (next === display) return;
+						display = next;
+						applyVisibility();
+					});
 
+					refreshDisplay();
+					displayTimer = window.setInterval(refreshDisplay, 2500);
 					greetingTimer = window.setTimeout(() => {
-						if (!state.hidden) say("嗨，我是小狮子！今天也一起加油吧～");
+						if (!state.hidden && webVisible()) say("嗨，我是刑小狮！今天也一起加油吧～");
 					}, 900);
 					scheduleIdle();
 				}
@@ -1080,6 +1253,7 @@
 					window.clearTimeout(bubbleTimer);
 					window.clearTimeout(happyTimer);
 					window.clearTimeout(spinTimer);
+					window.clearInterval(displayTimer);
 					window.cancelAnimationFrame(inertiaRaf);
 					window.cancelAnimationFrame(walkRaf);
 					if (domReadyHandler) {
@@ -1115,6 +1289,7 @@
 					}
 					mount();
 				};
+				registerSettings(ctx, require);
 				if (document.body) start();
 				else {
 					domReadyHandler = start;

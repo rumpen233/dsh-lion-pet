@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "刑小狮桌宠",
+  "version": "1.1.0",
+  "description": "把刑小狮放到网页右下角：会呼吸、会回应点击，也可以拖到喜欢的位置。",
+  "permissions": ["storage"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_title": "刑小狮桌宠",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "assets/icon.png",
+      "32": "assets/icon.png",
+      "48": "assets/icon.png",
+      "128": "assets/icon.png"
+    }
+  },
+  "icons": {
+    "16": "assets/icon.png",
+    "32": "assets/icon.png",
+    "48": "assets/icon.png",
+    "128": "assets/icon.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/lion-front.webp", "assets/lion-side.webp", "assets/icon.png"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

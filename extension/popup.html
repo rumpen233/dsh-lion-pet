@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>刑小狮桌宠</title>
+	<style>
+		:root { color-scheme: light; }
+		* { box-sizing: border-box; }
+		body {
+			margin: 0; width: 290px;
+			font: 14px/1.55 "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+			color: #203a5c;
+			background: linear-gradient(160deg, #f7fbff 0%, #eaf4ff 100%);
+		}
+		.head { display: flex; align-items: center; gap: 11px; padding: 16px 16px 10px; }
+		.head img { width: 46px; height: 46px; border-radius: 50%; box-shadow: 0 5px 14px rgba(34, 88, 160, .22); }
+		.title { font-weight: 700; font-size: 16px; color: #17325f; }
+		.sub { font-size: 12px; color: #6f87a4; }
+		.card {
+			margin: 0 12px 12px; padding: 12px 13px;
+			background: rgba(255, 255, 255, .86);
+			border: 1px solid #d6e6f8; border-radius: 13px;
+			box-shadow: 0 6px 18px rgba(36, 84, 144, .08);
+		}
+		.row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+		.label { font-weight: 600; }
+		.hint { margin: 7px 0 0; font-size: 12px; color: #7087a3; }
+		.switch { position: relative; width: 42px; height: 24px; flex: none; }
+		.switch input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+		.track {
+			position: absolute; inset: 0; border-radius: 999px;
+			background: #c7d8ea; transition: background .18s ease; pointer-events: none;
+		}
+		.track::after {
+			content: ""; position: absolute; top: 3px; left: 3px;
+			width: 18px; height: 18px; border-radius: 50%; background: #fff;
+			box-shadow: 0 2px 5px rgba(20, 50, 90, .2); transition: transform .18s ease;
+		}
+		.switch input:checked + .track { background: #2f6cc8; }
+		.switch input:checked + .track::after { transform: translateX(18px); }
+		button.reset {
+			width: 100%; padding: 9px 12px; border-radius: 10px; cursor: pointer;
+			border: 1px solid #bcd5f0; background: #f4f9ff; color: #265b9e;
+			font: 600 13px/1.3 inherit;
+		}
+		button.reset:hover { background: #e9f3ff; }
+		.foot { padding: 0 16px 14px; font-size: 11px; color: #8a9db4; display: flex; justify-content: space-between; }
+	</style>
+</head>
+<body>
+	<div class="head">
+		<img src="assets/icon.png" alt="">
+		<div>
+			<div class="title">刑小狮桌宠</div>
+			<div class="sub">网页右下角的小陪练</div>
+		</div>
+	</div>
+	<div class="card">
+		<div class="row">
+			<span class="label">在网页上显示</span>
+			<label class="switch">
+				<input id="enabled" type="checkbox">
+				<span class="track"></span>
+			</label>
+		</div>
+		<p class="hint">关闭后所有网页都会收起刑小狮；再次打开会回到上次的位置。</p>
+	</div>
+	<div class="card">
+		<button id="reset" class="reset" type="button">恢复默认位置</button>
+		<p class="hint">拖动刑小狮可以搬家；右键可以摸摸头、换姿势或隐藏。</p>
+	</div>
+	<div class="foot"><span>v1.1.0</span><span>DeepSeek Harness</span></div>
+	<script src="popup.js"></script>
+</body>
+</html>

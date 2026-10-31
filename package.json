@@ -1,7 +1,7 @@
 {
   "name": "dsh-lion-pet",
-  "version": "1.0.0",
-  "description": "小狮子桌宠 —— 把校徽里的元气小狮子放进 DeepSeek Harness：待机呼吸、随机散步、点击回应、拖拽甩动、右键菜单与位置记忆。",
+  "version": "1.1.0",
+  "description": "刑小狮桌宠 —— 把校徽里的刑小狮放进 DeepSeek Harness：待机呼吸、随机散步、点击回应、拖拽甩动、右键菜单、位置记忆，以及桌面悬浮与显示位置切换。",
   "author": "rumpen233",
   "license": "MIT",
   "repository": {
@@ -26,7 +26,10 @@
   },
   "files": [
     "lib",
-    "assets/icon.png",
+    "runtime",
+    "extension",
+    "assets",
+    "docs",
     "cordis.patch.yml",
     "README.md"
   ],
