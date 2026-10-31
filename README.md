@@ -57,7 +57,7 @@ dsh plugin --profile desktop add file:C:\path\to\dsh-lion-pet
    ```json
    {
      "dependencies": {
-       "dsh-lion-pet": "1.1.0"
+       "dsh-lion-pet": "1.1.1"
      },
      "dsh": {
        "profile": {

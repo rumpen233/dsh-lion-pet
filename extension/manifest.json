@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "刑小狮桌宠",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "把刑小狮放到网页右下角：会呼吸、会回应点击，也可以拖到喜欢的位置。",
   "permissions": ["storage"],
   "host_permissions": ["<all_urls>"],

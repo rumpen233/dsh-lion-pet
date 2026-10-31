@@ -225,7 +225,7 @@ export function apply(ctx) {
 								return
 							}
 							if (req.method === 'GET') {
-								sendJson(res, 200, { ...readConfig(), version: '1.1.0' })
+								sendJson(res, 200, { ...readConfig(), version: '1.1.1' })
 								return
 							}
 							if (req.method === 'PUT') {
@@ -242,7 +242,7 @@ export function apply(ctx) {
 								}
 								const saved = writeConfig({ display: body.display })
 								syncHelper()
-								sendJson(res, 200, { ...saved, version: '1.1.0' })
+								sendJson(res, 200, { ...saved, version: '1.1.1' })
 								return
 							}
 							sendJson(res, 405, { error: 'method not allowed' })
