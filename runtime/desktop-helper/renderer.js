@@ -30,6 +30,9 @@ let poseTimer = 0
 let interactive = false
 let pointerDown = null
 let dragStarted = false
+let walking = false
+let wanderTimer = 0
+let walkEndTimer = 0
 
 const canvas = document.createElement('canvas')
 const hit = canvas.getContext('2d', { willReadFrequently: true })
@@ -101,16 +104,104 @@ function spin() {
 	burst(5)
 }
 
-function setSide() {
+function setSide(hold = 2300) {
 	pet.classList.add('is-side')
 	clearTimeout(poseTimer)
-	poseTimer = setTimeout(() => pet.classList.remove('is-side'), 2300)
+	poseTimer = setTimeout(() => pet.classList.remove('is-side'), hold)
+}
+
+function scheduleWander(delay = 6500 + Math.random() * 6500) {
+	clearTimeout(wanderTimer)
+	wanderTimer = setTimeout(() => { void wander() }, delay)
+}
+
+function finishWalk() {
+	if (!walking) return
+	walking = false
+	clearTimeout(walkEndTimer)
+	pet.classList.remove('is-walking')
+	pet.classList.remove('is-left')
+	setSide(1400)
+	scheduleWander(8000 + Math.random() * 7000)
+}
+
+function stopWalking() {
+	clearTimeout(walkEndTimer)
+	const wasWalking = walking
+	walking = false
+	pet.classList.remove('is-walking')
+	pet.classList.remove('is-left')
+	try { window.lion.stopWalk?.() } catch {}
+	if (wasWalking) setSide(900)
+}
+
+async function wander() {
+	if (menuOpen || pointerDown || dragStarted || walking) {
+		scheduleWander(5000)
+		return
+	}
+	let geo
+	try {
+		geo = await window.lion.getGeometry()
+	} catch {
+		scheduleWander(12000)
+		return
+	}
+	const area = geo?.workArea
+	const bounds = geo?.bounds
+	if (!area || !bounds) {
+		scheduleWander(12000)
+		return
+	}
+	const width = bounds.width || 280
+	const height = bounds.height || 390
+	const pad = 10
+	const minX = area.x + pad
+	const maxX = area.x + area.width - width - pad
+	const minY = area.y + pad
+	const maxY = area.y + area.height - height - pad
+	if (maxX <= minX || maxY <= minY) {
+		scheduleWander(12000)
+		return
+	}
+
+	let targetX = bounds.x
+	let targetY = bounds.y
+	for (let i = 0; i < 12; i++) {
+		const horizontal = Math.random() < 0.72
+		const x = minX + Math.random() * (maxX - minX)
+		const y = horizontal
+			? Math.max(minY, Math.min(maxY, bounds.y + (Math.random() - 0.5) * 80))
+			: minY + Math.random() * (maxY - minY)
+		targetX = x
+		targetY = y
+		if (Math.hypot(x - bounds.x, y - bounds.y) >= 150) break
+	}
+	if (Math.hypot(targetX - bounds.x, targetY - bounds.y) < 80) {
+		targetX = bounds.x < (minX + maxX) / 2 ? maxX : minX
+	}
+
+	const distance = Math.hypot(targetX - bounds.x, targetY - bounds.y)
+	const duration = Math.round(Math.max(1600, Math.min(6200, distance / 0.17)))
+	walking = true
+	pet.classList.add('is-walking')
+	pet.classList.toggle('is-left', targetX < bounds.x)
+	setSide(duration + 700)
+	try {
+		window.lion.walkTo(targetX, targetY, duration)
+	} catch {
+		finishWalk()
+		return
+	}
+	clearTimeout(walkEndTimer)
+	walkEndTimer = setTimeout(finishWalk, duration + 220)
 }
 
 function closeMenu() {
 	menuOpen = false
 	menu.classList.remove('is-on')
 	menu.setAttribute('aria-hidden', 'true')
+	if (!walking && !pointerDown) scheduleWander(8000 + Math.random() * 6000)
 }
 
 function openMenu(clientX, clientY) {
@@ -129,6 +220,7 @@ function openMenu(clientX, clientY) {
 
 async function setDisplay(display) {
 	closeMenu()
+	stopWalking()
 	try {
 		await fetch(configUrl, {
 			method: 'PUT',
@@ -161,6 +253,7 @@ function handleAction(action) {
 pet.addEventListener('pointerdown', (event) => {
 	if (event.button !== 0) return
 	if (!overLion(event.clientX, event.clientY)) return
+	if (walking) stopWalking()
 	pointerDown = { x: event.screenX, y: event.screenY, id: event.pointerId }
 	dragStarted = false
 	try { pet.setPointerCapture(event.pointerId) } catch {}
@@ -197,11 +290,13 @@ window.addEventListener('pointerup', (event) => {
 			window.lion.dragEnd()
 			dragStarted = false
 			pointerDown = null
+			scheduleWander(9000 + Math.random() * 6000)
 			return
 		}
 		pointerDown = null
 		react()
 		if (Math.random() < 0.28) setSide()
+		scheduleWander(9000 + Math.random() * 6000)
 		return
 	}
 	if (menuOpen && !menu.contains(event.target)) closeMenu()
@@ -214,6 +309,7 @@ window.addEventListener('pointerleave', () => {
 pet.addEventListener('contextmenu', (event) => {
 	event.preventDefault()
 	if (!overLion(event.clientX, event.clientY)) return
+	if (walking) stopWalking()
 	openMenu(event.clientX, event.clientY)
 	setInteractive(true)
 })
@@ -236,6 +332,10 @@ document.addEventListener('pointerdown', (event) => {
 	if (!menu.contains(event.target) && !pet.contains(event.target)) closeMenu()
 }, true)
 
+window.addEventListener('blur', () => {
+	if (menuOpen) closeMenu()
+})
+
 function scheduleIdle() {
 	clearTimeout(idleTimer)
 	idleTimer = setTimeout(() => {
@@ -255,11 +355,15 @@ window.lion.getConfig().then((config) => {
 		window.lion.quit()
 		return
 	}
+	window.lion.onWalkDone?.(() => finishWalk())
 	setTimeout(() => say('嗨，我是刑小狮！桌面也要一起加油～'), 700)
 	scheduleIdle()
+	scheduleWander()
 }).catch(() => {
+	window.lion.onWalkDone?.(() => finishWalk())
 	setTimeout(() => say('嗨，我是刑小狮！桌面也要一起加油～'), 700)
 	scheduleIdle()
+	scheduleWander()
 })
 
 setTimeout(() => {

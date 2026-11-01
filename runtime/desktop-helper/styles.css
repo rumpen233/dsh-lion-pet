@@ -62,8 +62,14 @@ html, body {
 }
 .pet.is-side .front { opacity: 0; }
 .pet.is-side .side { opacity: 1; }
+.pet.is-left .side { transform: translateX(-50%) scaleX(1); }
+.pet.is-walking { animation: walk-bob 520ms ease-in-out infinite; }
 .pet.is-pop { animation: pop 560ms cubic-bezier(.2,.9,.2,1.25); }
 .pet.is-spin { animation: spin 760ms cubic-bezier(.4,0,.2,1); }
+@keyframes walk-bob {
+	0%, 100% { transform: translateX(-50%) translateY(0) rotate(-1.2deg); }
+	50% { transform: translateX(-50%) translateY(-7px) rotate(1.2deg); }
+}
 @keyframes float {
 	0%, 100% { transform: translateX(-50%) translateY(0); }
 	50% { transform: translateX(-50%) translateY(-5px); }

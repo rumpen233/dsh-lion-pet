@@ -15,6 +15,20 @@ contextBridge.exposeInMainWorld('lion', {
 	dragEnd() {
 		ipcRenderer.send('lion:drag-end')
 	},
+	walkTo(x, y, duration) {
+		ipcRenderer.send('lion:walk-to', { x, y, duration })
+	},
+	stopWalk() {
+		ipcRenderer.send('lion:walk-stop')
+	},
+	getGeometry() {
+		return ipcRenderer.invoke('lion:geometry')
+	},
+	onWalkDone(callback) {
+		const handler = () => callback()
+		ipcRenderer.on('lion:walk-done', handler)
+		return () => ipcRenderer.removeListener('lion:walk-done', handler)
+	},
 	quit() {
 		ipcRenderer.send('lion:quit')
 	},

@@ -15,6 +15,8 @@ const statePath = () => join(app.getPath('userData'), 'window.json')
 
 let win = null
 let dragging = null
+let walk = null
+let walkTimer = null
 let saveTimer = null
 let configTimer = null
 let quitting = false
@@ -60,6 +62,65 @@ function initialBounds() {
 	}
 }
 
+function clampToWorkArea(x, y) {
+	const display = screen.getDisplayNearestPoint({
+		x: Math.round(x + WIDTH / 2),
+		y: Math.round(y + HEIGHT / 2),
+	})
+	const area = display.workArea
+	const limitX = area.x + area.width - WIDTH
+	const limitY = area.y + area.height - HEIGHT
+	return {
+		x: Math.round(Math.max(area.x, Math.min(limitX, x))),
+		y: Math.round(Math.max(area.y, Math.min(limitY, y))),
+	}
+}
+
+function stopWalk(notify = false) {
+	if (walkTimer) {
+		clearInterval(walkTimer)
+		walkTimer = null
+	}
+	const wasWalking = Boolean(walk)
+	walk = null
+	if (notify && wasWalking && win && !win.isDestroyed()) {
+		win.webContents.send('lion:walk-done')
+	}
+}
+
+function currentGeometry() {
+	const bounds = win && !win.isDestroyed() ? win.getBounds() : initialBounds()
+	const display = screen.getDisplayMatching(bounds)
+	return {
+		bounds,
+		workArea: display.workArea,
+		scaleFactor: display.scaleFactor,
+		displays: screen.getAllDisplays().map((item) => ({
+			id: item.id,
+			bounds: item.bounds,
+			workArea: item.workArea,
+			scaleFactor: item.scaleFactor,
+		})),
+	}
+}
+
+function tickWalk() {
+	if (!walk || !win || win.isDestroyed()) {
+		stopWalk()
+		return
+	}
+	const progress = Math.min(1, (Date.now() - walk.startedAt) / walk.duration)
+	const eased = progress < 0.5
+		? 4 * progress * progress * progress
+		: 1 - Math.pow(-2 * progress + 2, 3) / 2
+	const x = Math.round(walk.from.x + (walk.to.x - walk.from.x) * eased)
+	const y = Math.round(walk.from.y + (walk.to.y - walk.from.y) * eased)
+	win.setPosition(x, y, false)
+	if (progress < 1) return
+	stopWalk(true)
+	saveWindowState()
+}
+
 function createWindow() {
 	if (win && !win.isDestroyed()) return win
 	const bounds = initialBounds()
@@ -91,10 +152,12 @@ function createWindow() {
 		win.setIgnoreMouseEvents(true, { forward: true })
 	})
 	win.on('move', () => {
+		if (walk) return
 		clearTimeout(saveTimer)
 		saveTimer = setTimeout(saveWindowState, 260)
 	})
 	win.on('closed', () => {
+		stopWalk()
 		win = null
 	})
 	return win
@@ -103,14 +166,15 @@ function createWindow() {
 function applyConfig(config) {
 	if (!config || typeof config !== 'object') return
 	const display = typeof config.display === 'string' ? config.display : 'both'
-	if (display === 'desktop' || display === 'both') {
-		createWindow()
-		if (win && !win.isDestroyed() && !win.isVisible()) win.showInactive()
+	if (display !== 'desktop' && display !== 'both') {
+		stopWalk()
+		quitting = true
+		if (win && !win.isDestroyed()) win.hide()
+		app.quit()
 		return
 	}
-	quitting = true
-	if (win && !win.isDestroyed()) win.hide()
-	app.quit()
+	createWindow()
+	if (win && !win.isDestroyed() && !win.isVisible()) win.showInactive()
 }
 
 async function pollConfig() {
@@ -128,8 +192,34 @@ ipcMain.on('lion:set-interactive', (_event, interactive) => {
 	win.setIgnoreMouseEvents(!interactive, { forward: true })
 })
 
+ipcMain.on('lion:walk-to', (_event, target) => {
+	if (!win || win.isDestroyed() || dragging) return
+	const x = Number(target?.x)
+	const y = Number(target?.y)
+	const duration = Number(target?.duration)
+	if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(duration)) return
+	const to = clampToWorkArea(x, y)
+	const bounds = win.getBounds()
+	stopWalk()
+	walk = {
+		from: { x: bounds.x, y: bounds.y },
+		to,
+		startedAt: Date.now(),
+		duration: Math.max(900, Math.min(8000, Math.round(duration))),
+	}
+	win.setIgnoreMouseEvents(true, { forward: true })
+	walkTimer = setInterval(tickWalk, 16)
+})
+
+ipcMain.on('lion:walk-stop', () => {
+	stopWalk()
+})
+
+ipcMain.handle('lion:geometry', () => currentGeometry())
+
 ipcMain.on('lion:drag-start', (_event, point) => {
 	if (!win || win.isDestroyed()) return
+	stopWalk()
 	const bounds = win.getBounds()
 	dragging = {
 		startX: Number(point?.x) || 0,
@@ -171,7 +261,7 @@ let cursorInside = null
 function startCursorWatch() {
 	clearInterval(cursorTimer)
 	cursorTimer = setInterval(() => {
-		if (!win || win.isDestroyed() || dragging) return
+		if (!win || win.isDestroyed() || dragging || walk) return
 		const bounds = win.getBounds()
 		const point = screen.getCursorScreenPoint()
 		const inside = point.x >= bounds.x && point.x < bounds.x + bounds.width
@@ -197,6 +287,7 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
 	quitting = true
+	stopWalk()
 	if (configTimer) clearInterval(configTimer)
 	if (cursorTimer) clearInterval(cursorTimer)
 	saveWindowState()

@@ -16,6 +16,7 @@
 - **隐藏与唤醒**：隐藏后右下角留一个圆形小头像，点一下就能叫回来。
 - **记忆**：网页端把位置、大小、锁定和隐藏状态存进 `localStorage`；桌面端把窗口位置存在用户数据目录，下次打开还在原地。
 - **桌面悬浮**：Electron 透明置顶小窗，可以拖到屏幕任意位置；鼠标移出窗口时自动点击穿透，不挡桌面操作。
+- **桌面漫游**：桌面模式下会自己挑一个屏幕位置走过去，方向、步态和侧身姿势跟着切换；走到屏幕边缘会自动收住，不跑出工作区。
 - **显示模式**：DSH 设置 → 插件 → 刑小狮，可选「两者都显示 / 仅桌面 / 仅网页 / 关闭」。
 - **网页通用版**：`extension/` 是 Chrome / Edge 的 MV3 扩展，安装后可以在任意 http(s) 网页右下角显示刑小狮。
 - **不打扰**：不调用模型、不写会话、不产生 token 费用。
@@ -57,7 +58,7 @@ dsh plugin --profile desktop add file:C:\path\to\dsh-lion-pet
    ```json
    {
      "dependencies": {
-       "dsh-lion-pet": "1.1.1"
+       "dsh-lion-pet": "1.2.0"
      },
      "dsh": {
        "profile": {
@@ -145,7 +146,7 @@ node --check lib/client.js
 
 源码在 `src/client.template.js`，构建脚本把 `__LION_FRONT__` / `__LION_SIDE__` 替换成 base64 data URL，并把 `src/index.js` 复制到 `lib/index.js`。浏览器半侧的宠物本体是纯 DOM + Shadow DOM；设置页按需加载宿主提供的 React，避免与宿主 UI 的样式和版本耦合。
 
-桌面半侧在 `runtime/desktop-helper/`：一个 280×390 的透明置顶窗口，加载同一套狮子素材，通过 `preload.js` 暴露的 IPC 处理拖拽、点击穿透和退出。host 侧在 `src/index.js`，负责 `/dsh-lion-pet/config` 路由、配置文件和 helper 生命周期。
+桌面半侧在 `runtime/desktop-helper/`：一个 280×390 的透明置顶窗口，加载同一套狮子素材，通过 `preload.js` 暴露的 IPC 处理拖拽、桌面漫游、点击穿透和退出。漫游不是移动窗口里的贴图，而是主进程用缓动动画移动整个窗口，因此狮子可以真正走到桌面的任意位置；每一步都会夹在当前显示器的工作区内。host 侧在 `src/index.js`，负责 `/dsh-lion-pet/config` 路由、配置文件和 helper 生命周期。
 
 网页通用版在 `extension/`，不需要构建，直接在浏览器里「加载已解压的扩展程序」。
 
